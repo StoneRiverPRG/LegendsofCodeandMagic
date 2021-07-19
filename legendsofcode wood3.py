@@ -39,7 +39,8 @@ while True:
         opponent_health_change = int(inputs[9])
         card_draw = int(inputs[10])
         print(card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw, file=sys.stderr)
-        if location == 0:
+        if location == 0: # Draft phase
+            # TODO: key is insatance id to card_number. which is best?
             player_hand_map[instance_id] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
         if location == 1:
             player_board_map[instance_id] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
@@ -57,10 +58,25 @@ while True:
 
     # Draft mode
     if DRAFT:
-        print("Draft mode", file=sys.stderr)
-        print("PASS")
+        print("Draft phase", file=sys.stderr)
+        # choose simply most high attack card
+        print(player_hand_map, file=sys.stderr)
+        attack = 0
+        attack_max = 0
+        max_id = 0
+        # TODO: change card count forin to plyaerhandmap key
+        # draft phase instance id is all -1
+        for i in range(card_count):
+            # BUG:key is not 0, 1, 2,
+            attack = player_hand_map[i][5]
+            if attack_max <= attack:
+                attack_max = attack
+                max_id = i
+        print("max attack = " + str(attack_max), file=sys.stderr)
+        print("PICK", max_id)
+        # print("PASS")
 
     # Battle mode
     if BATTLE:
-        print("Battle mode", file=sys.stderr)
+        print("Battle phase", file=sys.stderr)
         print("PASS")
