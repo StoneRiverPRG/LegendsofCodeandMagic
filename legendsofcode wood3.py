@@ -107,9 +107,14 @@ while True:
                 break
 
         # attack creature
-        # attack opponent(-1)
 
-        # print("PASS")
+        # attack opponent(-1)
+        for id in player_board_map.keys():
+            battle_str += "ATTACK " + str(id) + " -1;"
+
+        # action
+        if battle_str == "":
+            battle_str = "PASS"
         print(battle_str)
 
     if player[0][2] == 29:
