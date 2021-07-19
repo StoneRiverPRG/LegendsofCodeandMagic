@@ -40,12 +40,12 @@ while True:
         card_draw = int(inputs[10])
         print(card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw, file=sys.stderr)
         if location == 0: # Draft phase
-            # TODO: key is insatance id to card_number. which is best?
-            player_hand_map[instance_id] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
+            # NOTE: key is changed insatance id to card_number. which is best?
+            player_hand_map[card_number] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
         if location == 1:
-            player_board_map[instance_id] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
+            player_board_map[card_number] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
         if location == 2:
-            opponent_board_map[instance_id] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
+            opponent_board_map[card_number] = (card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw)
 
 
 
@@ -64,15 +64,15 @@ while True:
         attack = 0
         attack_max = 0
         max_id = 0
-        # TODO: change card count forin to plyaerhandmap key
+        # NOTE:changed card count forin to plyaerhandmap key
         # draft phase instance id is all -1
-        for i in range(card_count):
+        for i, k in enumerate(player_hand_map.keys()):
             # BUG:key is not 0, 1, 2,
-            attack = player_hand_map[i][5]
+            attack = player_hand_map[k][5]
             if attack_max <= attack:
                 attack_max = attack
                 max_id = i
-        print("max attack = " + str(attack_max), file=sys.stderr)
+        print("max attack(id) = " + str(attack_max) + " (" + str(max_id), file=sys.stderr)
         print("PICK", max_id)
         # print("PASS")
 
