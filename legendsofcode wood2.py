@@ -30,6 +30,20 @@ class CardGame():
         evaluate += my_health_change
         evaluate -= opponent_health_change
         evaluate -= cost
+        if len(abilities) < 5:
+            print("abilities error", file=sys.stderr)
+            return -1
+
+        for s in abilities:
+            if s == "-":
+                continue
+            elif s == "B":
+                evaluate += attack
+            elif s == "C":
+                evaluate += attack/2 + defense/2
+            elif s == "G":
+                evaluate += defense
+
         print("my, opp healthchancge= ", my_health_change, opponent_health_change, file=sys.stderr)
 
         return evaluate
