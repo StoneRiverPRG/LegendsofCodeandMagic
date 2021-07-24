@@ -11,6 +11,30 @@ class CardGame():
         self.BATTLE = False
         self.turn = 0
 
+    def evalDraft(seld, tp_hand):
+        # player_hand_map[card_number] =
+        #   (card_number, instance_id, location,
+        #   card_type, cost, attack, defense, abilities,
+        #   my_health_change, opponent_health_change, card_draw)
+        if len(tp_hand) < 11:
+            print("hand dict error", file=sys.stderr)
+            return -1
+        evaluate = 0
+
+        card_type, cost, attack, defense = tp_hand[3], tp_hand[4], tp_hand[5], tp_hand[6]
+        abilities, my_health_change, opponent_health_change = tp_hand[7], tp_hand[8], tp_hand[9]
+        card_draw = tp_hand[10]
+
+        evaluate += attack
+        evaluate += defense
+        evaluate += my_health_change
+        evaluate -= opponent_health_change
+        evaluate -= cost
+        print("my, opp healthchancge= ", my_health_change, opponent_health_change, file=sys.stderr)
+
+        return evaluate
+
+
     def Run(self):
         print("turn ", self.turn, file=sys.stderr)
         player = []
@@ -43,6 +67,7 @@ class CardGame():
             opponent_health_change = int(inputs[9])
             card_draw = int(inputs[10])
             print(card_number, instance_id, location, card_type, cost, attack, defense, abilities, my_health_change, opponent_health_change, card_draw, file=sys.stderr)
+
             if location == 0: # Draft phase
                 # NOTE: key is changed insatance id to card_number. which is best?
                 if self.DRAFT == True:
@@ -68,18 +93,20 @@ class CardGame():
             print("Draft phase", file=sys.stderr)
             # choose simply most high attack card
             print(player_hand_map, file=sys.stderr)
-            attack = 0
-            attack_max = 0
+            #attack = 0
+            evalue_max = 0
             max_id = 0
+            evalue = 0
             # NOTE:changed card count forin to plyaerhandmap key
             # draft phase instance id is all -1
             for i, k in enumerate(player_hand_map.keys()):
                 # NOTE:key is not 0, 1, 2,
-                attack = player_hand_map[k][5]
-                if attack_max <= attack:
-                    attack_max = attack
+                evalue = self.evalDraft(player_hand_map[k])
+                if evalue_max <= evalue:
+                    evalue_max = evalue
                     max_id = i
-            print("max attack(id) = " + str(attack_max) + " (" + str(max_id), file=sys.stderr)
+
+                print("evalue", evalue, file=sys.stderr)
             print("PICK", max_id)
             # print("PASS")
 
@@ -92,7 +119,7 @@ class CardGame():
             battle_str = ""
             # summon
             cost = player[0][1]
-            while cost > 2:
+            while cost > 1:
                 attack = 10
                 attack_min = 10
                 min_id = 0
@@ -121,7 +148,7 @@ class CardGame():
 
         if player[0][2] == 29:
             self.DRAFT = False
-            self.BATTLE = True
+            #self.BATTLE = True
 
         self.turn += 1
 
