@@ -84,12 +84,14 @@ class CardGame():
             if evalue >= evalue_max:
                 evalue_max = evalue
                 maxid = key
-        if len(handcopy) > 1:
+        if len(handcopy) > 0:
             summon_str += "SUMMON " + str(maxid) + ";"
             print(handcopy, file=sys.stderr)
+            print("evalue:", summon_str, file=sys.stderr)
+            return summon_str, maxid
 
-        print("evalue:", summon_str, file=sys.stderr)
-        return summon_str
+
+        return summon_str, -1
 
 
 
@@ -178,7 +180,15 @@ class CardGame():
             battle_str = ""
             # summon
             cost = player[0][1]
-            battle_str += self.SummonAttack(cost, player_hand_map, player_board_map, opponent_board_map)
+            while cost > 0:
+                battle_str_temp, key = self.SummonAttack(cost, player_hand_map, player_board_map, opponent_board_map)
+                battle_str += battle_str_temp
+                if key == -1:
+                    break
+                cost -= player_hand_map[key][4] # cost
+                player_board_map[key] = player_hand_map[key]
+                player_hand_map.pop(key)
+
 #            while cost > 1:
 #                attack = 10
 #                attack_min = 10
