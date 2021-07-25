@@ -48,6 +48,51 @@ class CardGame():
 
         return evaluate
 
+    def SummonEvaluate(self, card, board, opp_board):
+        evalue = 0
+        GUARD = False
+        for key in board.keys():
+            abi = board[key][7] # abilities
+            for s in abi:
+                if s == "G":
+                    GUARD = True
+        if not GUARD:
+            if "G" in card[7]:
+                evalue += card[6]
+
+        return evalue
+
+    def SummonAttack(self, cost, hand, board, opp_board):
+        # player_hand_map[instance_id] =
+        #   (card_number, instance_id, location, card_type,
+        #   cost, attack, defense, abilities, my_health_change,
+        #   opponent_health_change, card_draw)
+        summon_str = ""
+        evalue_max = 0
+        maxid = 0
+        handcopy = hand.copy()
+        print("copysize = ", len(handcopy), len(hand), file=sys.stderr)
+        for key in hand.keys():
+            evalue = 0
+            if cost < hand[key][4]:
+                print("cost, cardcost =", cost, hand[key][4], file=sys.stderr)
+                handcopy.pop(key)
+                print("key del ", key, " copysize = ", len(handcopy), file=sys.stderr)
+                continue
+            evalue = self.SummonEvaluate(handcopy[key], board, opp_board)
+            print("key, evalue = ",key, evalue, file=sys.stderr)
+            if evalue >= evalue_max:
+                evalue_max = evalue
+                maxid = key
+        if len(handcopy) > 1:
+            summon_str += "SUMMON " + str(maxid) + ";"
+            print(handcopy, file=sys.stderr)
+
+        print("evalue:", summon_str, file=sys.stderr)
+        return summon_str
+
+
+
 
     def Run(self):
         print("turn ", self.turn, file=sys.stderr)
@@ -133,21 +178,22 @@ class CardGame():
             battle_str = ""
             # summon
             cost = player[0][1]
-            while cost > 1:
-                attack = 10
-                attack_min = 10
-                min_id = 0
-                for id in player_hand_map.keys():
-                    attack = player_hand_map[id][5]
-                    if attack <= attack_min:
-                        attack_min = attack
-                        min_id = id
-                if cost >= player_hand_map[min_id][4]:
-                    battle_str += "SUMMON " + str(min_id) + ";"
-                    cost -= player_hand_map[min_id][4]
-                    _ = player_hand_map.pop(min_id)
-                else:
-                    break
+            battle_str += self.SummonAttack(cost, player_hand_map, player_board_map, opponent_board_map)
+#            while cost > 1:
+#                attack = 10
+#                attack_min = 10
+#                min_id = 0
+#                for id in player_hand_map.keys():
+#                    attack = player_hand_map[id][5]
+#                    if attack <= attack_min:
+#                        attack_min = attack
+#                        min_id = id
+#                if cost >= player_hand_map[min_id][4]:
+#                    battle_str += "SUMMON " + str(min_id) + ";"
+#                    cost -= player_hand_map[min_id][4]
+#                    _ = player_hand_map.pop(min_id)
+#                else:
+#                    break
 
             # attack creature
 
