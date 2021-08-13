@@ -11,7 +11,7 @@ class CardGame():
         self.BATTLE = False
         self.turn = 0
 
-    def evalDraft(seld, tp_hand):
+    def evalDraft(seld, tp_hand, decklist):
         # player_hand_map[card_number] =
         #   (card_number, instance_id, location,
         #   card_type, cost, attack, defense, abilities,
@@ -20,10 +20,31 @@ class CardGame():
             print("hand dict error", file=sys.stderr)
             return -1
         evaluate = 0
+        creature_nums = 0
+        green_items = 0
+        red_items = 0
+        blue_items = 0
+        CREATURE = 0
+        GREEN = 1
+        RED = 2
+        BLUE = 3
+
+
+        for card in decklist:
+            deck_type = card[3]
+            if deck_type == GREEN:
+                green_items += 1
+            if deck_type == RED:
+                red_items += 1
+            if deck_type == BLUE:
+                blue_items += 1
+            if deck_type == CREATURE:
+                creature_nums += 1
 
         card_type, cost, attack, defense = tp_hand[3], tp_hand[4], tp_hand[5], tp_hand[6]
         abilities, my_health_change, opponent_health_change = tp_hand[7], tp_hand[8], tp_hand[9]
         card_draw = tp_hand[10]
+
 
         evaluate += attack
         evaluate += defense
@@ -37,12 +58,19 @@ class CardGame():
         for s in abilities:
             if s == "-":
                 continue
-            elif s == "B":
+            elif s == "B": # Breakthrough
                 evaluate += attack
-            elif s == "C":
+            elif s == "C": # Charge:summon attack
                 evaluate += attack/2 + defense/2
-            elif s == "G":
+            elif s == "G": # Guard: first guard
                 evaluate += defense
+            elif s == "D": # Drain:heal player
+                evaluate += attack
+            elif s == "L": # Lethal:kill
+                evaluate += attack
+            elif s == "W": # ignore damage
+                evaluate += defense
+
 
         print("my, opp healthchancge= ", my_health_change, opponent_health_change, file=sys.stderr)
 
@@ -136,6 +164,7 @@ class CardGame():
         player_hand_map = {}
         player_board_map = {}
         opponent_board_map = {}
+        player_decklist = []
         card_count = int(input())
         for i in range(card_count):
             inputs = input().split()
@@ -180,17 +209,21 @@ class CardGame():
             #attack = 0
             evalue_max = 0
             max_id = 0
+            max_key = 0
             evalue = 0
             # NOTE:changed card count forin to plyaerhandmap key
             # draft phase instance id is all -1
             for i, k in enumerate(player_hand_map.keys()):
                 # NOTE:key is not 0, 1, 2,
-                evalue = self.evalDraft(player_hand_map[k])
+                evalue = self.evalDraft(player_hand_map[k], player_decklist)
                 if evalue_max <= evalue:
                     evalue_max = evalue
                     max_id = i
+                    max_key = k
 
                 print("evalue", evalue, file=sys.stderr)
+            player_decklist.append(player_hand_map[max_key])
+
             print("PICK", max_id)
             # print("PASS")
 
