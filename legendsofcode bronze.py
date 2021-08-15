@@ -1,5 +1,6 @@
 import sys
 import math
+from typing import Awaitable
 
 # Auto-generated code below aims at helping you parse
 # the standard input according to the problem statement.
@@ -10,6 +11,7 @@ class CardGame():
         self.DRAFT = True
         self.BATTLE = False
         self.turn = 0
+        self.player_decklist = []
 
     def evalDraft(seld, tp_hand, decklist):
         # player_hand_map[card_number] =
@@ -28,10 +30,13 @@ class CardGame():
         GREEN = 1
         RED = 2
         BLUE = 3
+        cost_list = [0 for i in range(13)]
+
 
 
         for card in decklist:
             deck_type = card[3]
+            cost = card[4]
             if deck_type == GREEN:
                 green_items += 1
             if deck_type == RED:
@@ -41,10 +46,25 @@ class CardGame():
             if deck_type == CREATURE:
                 creature_nums += 1
 
+            if cost > 12:
+                print("cost list index error", file=sys.stderr)
+                continue
+            cost_list[cost] += 1
+        cost_num = [cost_list[i] for i in range(13)]
+
+
         card_type, cost, attack, defense = tp_hand[3], tp_hand[4], tp_hand[5], tp_hand[6]
         abilities, my_health_change, opponent_health_change = tp_hand[7], tp_hand[8], tp_hand[9]
         card_draw = tp_hand[10]
 
+        if len(decklist) > 15:
+            if card_type == GREEN and (green_items < 2):
+                evaluate += 10
+            elif card_type == RED and (red_items < 2):
+                evaluate += 10
+            elif card_type == BLUE and (blue_items < 2):
+                evaluate += 10
+                evaluate -= defense * 2
 
         evaluate += attack
         evaluate += defense
@@ -72,9 +92,57 @@ class CardGame():
                 evaluate += defense
 
 
-        print("my, opp healthchancge= ", my_health_change, opponent_health_change, file=sys.stderr)
+        # print("my, opp healthchancge= ", my_health_change, opponent_health_change, file=sys.stderr)
 
         return evaluate
+
+
+    def PrintDeckType(self, decklist):
+        print("len(decklist) = ", len(decklist), file=sys.stderr)
+        creature_nums = 0
+        green_items = 0
+        red_items = 0
+        blue_items = 0
+        CREATURE = 0
+        GREEN = 1
+        RED = 2
+        BLUE = 3
+        cost_list = [0 for i in range(13)]
+
+        for card in decklist:
+            deck_type = card[3]
+            cost = card[4]
+            if deck_type == GREEN:
+                green_items += 1
+            if deck_type == RED:
+                red_items += 1
+            if deck_type == BLUE:
+                blue_items += 1
+            if deck_type == CREATURE:
+                creature_nums += 1
+                if cost > 12:
+                    print("cost list index error", file=sys.stderr)
+                    continue
+                cost_list[cost] += 1
+
+        cost_num = [cost_list[i] for i in range(13)]
+        print("C:", file=sys.stderr, end="")
+        print("+" * (creature_nums//5), "*" * (creature_nums % 5), file=sys.stderr)
+        print("G:", file=sys.stderr, end="")
+        print("*" * (green_items), file=sys.stderr)
+        print("R:", file=sys.stderr, end="")
+        print("*" * (red_items), file=sys.stderr)
+        print("B:", file=sys.stderr, end="")
+        print("*" * (blue_items), file=sys.stderr)
+        for i in range(13):
+            print(str(i)+":", file=sys.stderr, end="")
+            print("+" * (cost_num[i] // 5) + "*" * (cost_num[i] % 5), file=sys.stderr)
+
+
+        return 0
+
+
+
 
     def SummonEvaluate(self, card, board, opp_board):
         evalue = 0
@@ -164,7 +232,7 @@ class CardGame():
         player_hand_map = {}
         player_board_map = {}
         opponent_board_map = {}
-        player_decklist = []
+
         card_count = int(input())
         for i in range(card_count):
             inputs = input().split()
@@ -206,6 +274,7 @@ class CardGame():
             print("Draft phase", file=sys.stderr)
             # choose simply most high attack card
             print(player_hand_map, file=sys.stderr)
+            _ = self.PrintDeckType(self.player_decklist)
             #attack = 0
             evalue_max = 0
             max_id = 0
@@ -215,14 +284,15 @@ class CardGame():
             # draft phase instance id is all -1
             for i, k in enumerate(player_hand_map.keys()):
                 # NOTE:key is not 0, 1, 2,
-                evalue = self.evalDraft(player_hand_map[k], player_decklist)
+                evalue = self.evalDraft(player_hand_map[k], self.player_decklist)
                 if evalue_max <= evalue:
                     evalue_max = evalue
                     max_id = i
                     max_key = k
 
                 print("evalue", evalue, file=sys.stderr)
-            player_decklist.append(player_hand_map[max_key])
+            # print("decklist append:", player_hand_map[max_key], file=sys.stderr)
+            self.player_decklist.append(player_hand_map[max_key])
 
             print("PICK", max_id)
             # print("PASS")
