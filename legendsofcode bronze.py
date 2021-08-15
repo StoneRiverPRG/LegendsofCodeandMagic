@@ -30,6 +30,7 @@ class CardGame():
         GREEN = 1
         RED = 2
         BLUE = 3
+        ABLP = 5 # ability point
         cost_list = [0 for i in range(13)]
 
 
@@ -57,14 +58,24 @@ class CardGame():
         abilities, my_health_change, opponent_health_change = tp_hand[7], tp_hand[8], tp_hand[9]
         card_draw = tp_hand[10]
 
+        if card_type == GREEN:
+            evaluate += 1
+        elif card_type == RED:
+            evaluate -= attack * 2
+            evaluate -= defense * 2
+        elif card_type == BLUE:
+            evaluate -= defense * 2
+
         if len(decklist) > 15:
-            if card_type == GREEN and (green_items < 2):
+            if card_type == GREEN and (green_items < 3):
                 evaluate += 10
             elif card_type == RED and (red_items < 2):
                 evaluate += 10
             elif card_type == BLUE and (blue_items < 2):
                 evaluate += 10
-                evaluate -= defense * 2
+
+        if card_type == CREATURE and (cost < 4 ) and (cost_num[cost] < 4):
+            evaluate += 5
 
         evaluate += attack
         evaluate += defense
@@ -80,16 +91,22 @@ class CardGame():
                 continue
             elif s == "B": # Breakthrough
                 evaluate += attack
+                evaluate += ABLP
             elif s == "C": # Charge:summon attack
                 evaluate += attack/2 + defense/2
+                evaluate += ABLP
             elif s == "G": # Guard: first guard
                 evaluate += defense
+                evaluate += ABLP
             elif s == "D": # Drain:heal player
                 evaluate += attack
+                evaluate += ABLP
             elif s == "L": # Lethal:kill
                 evaluate += attack
+                evaluate += ABLP
             elif s == "W": # ignore damage
                 evaluate += defense
+                evaluate += ABLP
 
 
         # print("my, opp healthchancge= ", my_health_change, opponent_health_change, file=sys.stderr)
@@ -145,6 +162,20 @@ class CardGame():
 
 
     def SummonEvaluate(self, card, board, opp_board):
+        """when summon, evaluate summon efficient value
+
+        Args:
+            card (dict): [description]
+            board (dict): [description]
+            opp_board (dict): [description]
+
+        Returns:
+            dict: [description]
+        """
+        # player_hand_map[instance_id] =
+        #   (card_number, instance_id, location, card_type,
+        #   cost, attack, defense, abilities, my_health_change,
+        #   opponent_health_change, card_draw)
         evalue = 0
         GUARD = False
         for key in board.keys():
@@ -154,7 +185,12 @@ class CardGame():
                     GUARD = True
         if not GUARD:
             if "G" in card[7]:
-                evalue += card[6]
+                evalue += card[6] # defense
+
+        if len(board) > 2:
+            if card[3] == 1: # card type == GREEN
+                evalue += 5
+
 
         return evalue
 
@@ -165,28 +201,59 @@ class CardGame():
         #   opponent_health_change, card_draw)
         summon_str = ""
         evalue_max = 0
-        maxid = 0
+        maxid = -1
         handcopy = hand.copy()
-        print("copysize = ", len(handcopy), len(hand), file=sys.stderr)
+        # print("copysize = ", len(handcopy), len(hand), file=sys.stderr)
         for key in hand.keys():
             evalue = 0
-            if cost < hand[key][4]:
-                print("cost, cardcost =", cost, hand[key][4], file=sys.stderr)
+            if cost < hand[key][4]: # ignore if player cost < card cost
+                # print("cost, cardcost =", cost, hand[key][4], file=sys.stderr)
                 handcopy.pop(key)
-                print("key del ", key, " copysize = ", len(handcopy), file=sys.stderr)
+                # print("key del ", key, " copysize = ", len(handcopy), file=sys.stderr)
                 continue
             evalue = self.SummonEvaluate(handcopy[key], board, opp_board)
             print("key, evalue = ",key, evalue, file=sys.stderr)
             if evalue >= evalue_max:
                 evalue_max = evalue
                 maxid = key
-        if len(handcopy) > 0:
-            summon_str += "SUMMON " + str(maxid) + ";"
-            print(handcopy, file=sys.stderr)
-            print("evalue:", summon_str, file=sys.stderr)
-            return summon_str, maxid
 
-        return summon_str, -1
+        if len(handcopy) > 0:
+            if hand[maxid][3] == 0: # CREATURE
+                summon_str += "SUMMON " + str(maxid) + ";"
+            elif hand[maxid][3] == 1: # GREEN
+                cost_temp = 0
+                cost_max = 0
+                cost_maxid = -1
+                for key in handcopy.keys():
+                    cost_temp = handcopy[key][4]
+                    if cost_temp >= cost_max:
+                        cost_max = cost_temp
+                        cost_maxid = key
+
+                summon_str += "USE " + str(maxid) + " " + str(cost_maxid) + ";"
+
+            elif hand[maxid][3] == 2: # RED
+                if len(opp_board) == 0:
+                    summon_str = ""
+                    maxid = -1
+                elif len(opp_board) > 0:
+                    cost_temp = 0
+                    cost_max = 0
+                    cost_maxid = -1
+                    for key in opp_board.keys():
+                        cost_temp = opp_board[key][4]
+                        if cost_temp >= cost_max:
+                            cost_max = cost_temp
+                            cost_maxid = key
+
+                    summon_str += "USE " + str(maxid) + " " + str(cost_maxid) + ";"
+
+            elif hand[maxid][3] == 3: # BLUE
+                summon_str += "USE " + str(maxid) + " " + "-1;"
+            # print(handcopy, file=sys.stderr)
+            # print("evalue:", summon_str, file=sys.stderr)
+
+        return summon_str, maxid
 
 
     def Attack(self, board, opp_board):
